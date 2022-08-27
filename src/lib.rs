@@ -5,7 +5,8 @@ use pyo3::prelude::*;
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn rust(_py: Python, m: &PyModule) -> PyResult<()> {
+fn mandelbrot(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_class::<complex::Complex>()?;
     m.add_function(wrap_pyfunction!(mandelbrot::sample, m)?)?;
     Ok(())
 }

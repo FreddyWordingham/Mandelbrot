@@ -11,5 +11,5 @@ git clone git@github.com:FreddyWordingham/Mandelbrot.git
 cd Mandelbrot
 poetry install
 poetry run maturin develop
-poetry run python example.py
+poetry run python python/example.py
 ```
