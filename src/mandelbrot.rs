@@ -19,7 +19,7 @@ pub fn sample(c: Complex, max_iter: i32) -> i32 {
 
 /// Determine the average number of iterations required to escape a region.
 #[pyfunction]
-pub fn multi_sample(c: Complex, max_iter: i32, super_samples: i32, epsilon: f64) -> i32 {
+pub fn multi_sample(c: Complex, max_iter: i32, super_samples: i32, epsilon: f64) -> f64 {
     let start = c + Complex::new(
         epsilon * (1 - super_samples) as f64,
         epsilon * (1 - super_samples) as f64,
@@ -32,7 +32,7 @@ pub fn multi_sample(c: Complex, max_iter: i32, super_samples: i32, epsilon: f64)
             total += sample(start + Complex::new(re, im), max_iter);
         }
     }
-    total
+    total as f64 / (super_samples * super_samples) as f64
 }
 
 fn sample_area(
@@ -41,7 +41,7 @@ fn sample_area(
     res: [usize; 2],
     super_samples: i32,
     max_iter: i32,
-    data: &mut Array2<i32>,
+    data: &mut Array2<f64>,
 ) {
     let aspect_ratio = res[0] as f64 / res[1] as f64;
     let start = centre + Complex::new(scale * -0.5, scale / aspect_ratio * -0.5);
@@ -59,7 +59,7 @@ fn sample_area(
 }
 
 fn data_to_cols(
-    data: &Array2<i32>,
+    data: &Array2<f64>,
     max_iter: i32,
     cmap: &Gradient<LinSrgb>,
     cols: &mut Array3<u8>,
@@ -96,7 +96,7 @@ pub fn render_image(
         LinSrgb::new(0.95, 0.90, 0.30),
     ]);
 
-    let mut data = Array2::<i32>::zeros(res);
+    let mut data = Array2::<f64>::zeros(res);
     let mut cols = Array3::<u8>::zeros((res[0], res[1], 3));
 
     sample_area(centre, scale, res, super_samples, max_iter, &mut data);

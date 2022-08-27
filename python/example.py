@@ -9,3 +9,9 @@ print(centre, " -> ", n)
 k = 4
 m = mandelbrot.multi_sample(centre, max_iter, k, 1e-15)
 print(centre, " -> ", m / k**2)
+
+
+scale = 0.1
+res = [512, 512]
+super_samples = 4
+mandelbrot.render_image(centre, scale, res, super_samples, max_iter)
