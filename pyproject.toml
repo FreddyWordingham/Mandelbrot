@@ -1,6 +1,6 @@
 [tool.poetry]
 authors = ["Freddy Wordingham <f.wordingham@exeter.ac.uk>"]
-description = "An example full-stack web-application."
+description = "An infinite explorer"
 name = "mandelbrot"
 version = "0.1.0"
 
