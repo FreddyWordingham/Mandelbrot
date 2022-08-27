@@ -1,5 +1,7 @@
 use crate::complex::Complex;
-use ndarray::Array2;
+use image::RgbImage;
+use ndarray::{arr1, s, Array2, Array3};
+use palette::{Gradient, LinSrgb, Pixel};
 use pyo3::prelude::*;
 
 /// Determine the number of iterations required to escape a point.
@@ -56,8 +58,50 @@ fn sample_area(
     }
 }
 
-fn data_to_col() {}
+fn data_to_cols(
+    data: &Array2<i32>,
+    max_iter: i32,
+    cmap: &Gradient<LinSrgb>,
+    cols: &mut Array3<u8>,
+) {
+    let max = max_iter as f32;
 
-fn col_to_image() {}
+    let (width, height) = data.dim();
+    for yi in 0..height {
+        for xi in 0..width {
+            let col = cmap.get(data[(xi, yi)] as f32 / max);
+            let u8s: [u8; 3] = col.into_format().into_raw();
+            cols.slice_mut(s![xi, yi, ..]).assign(&arr1(&u8s));
+        }
+    }
+}
 
-pub fn image(centre: Complex, scale: f64, res: [usize; 2], super_samples: i32, max_iter: i32) {}
+fn cols_to_image(arr: Array3<u8>) -> RgbImage {
+    let (width, height, _) = arr.dim();
+    RgbImage::from_raw(width as u32, height as u32, arr.into_raw_vec())
+        .expect("container should have the right size for the image dimensions")
+}
+
+#[pyfunction]
+pub fn render_image(
+    centre: Complex,
+    scale: f64,
+    res: [usize; 2],
+    super_samples: i32,
+    max_iter: i32,
+) {
+    let cmap = Gradient::new(vec![
+        LinSrgb::new(0.00, 0.05, 0.20),
+        LinSrgb::new(0.70, 0.10, 0.20),
+        LinSrgb::new(0.95, 0.90, 0.30),
+    ]);
+
+    let mut data = Array2::<i32>::zeros(res);
+    let mut cols = Array3::<u8>::zeros((res[0], res[1], 3));
+
+    sample_area(centre, scale, res, super_samples, max_iter, &mut data);
+    data_to_cols(&data, max_iter, &cmap, &mut cols);
+    cols_to_image(cols)
+        .save(format!("output/img_{:04}.png", 0))
+        .expect("Failed to save image.");
+}
