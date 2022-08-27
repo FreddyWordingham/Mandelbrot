@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 #
+Cargo.lock
 poetry.lock
