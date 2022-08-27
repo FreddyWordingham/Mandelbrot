@@ -1,7 +1,7 @@
 use crate::complex::Complex;
 use pyo3::prelude::*;
 
-/// Determine the number of iterations required to escape.
+/// Determine the number of iterations required to escape a point.
 #[pyfunction]
 pub fn sample(c: Complex, max_iter: i32) -> i32 {
     let mut z = Complex::zero();
@@ -14,7 +14,9 @@ pub fn sample(c: Complex, max_iter: i32) -> i32 {
     return max_iter;
 }
 
-fn super_sample(c: Complex, max_iter: i32, super_samples: i32, delta: f64) -> i32 {
+/// Determine the average number of iterations required to escape a region.
+#[pyfunction]
+pub fn multi_sample(c: Complex, max_iter: i32, super_samples: i32, delta: f64) -> i32 {
     let start = c + Complex::new(
         delta * (1 - super_samples) as f64,
         delta * (1 - super_samples) as f64,
