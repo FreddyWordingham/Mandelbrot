@@ -1,5 +1,7 @@
 pub mod complex;
-pub mod mandelbrot;
+pub mod cpu;
+pub mod gpu;
+pub mod util;
 
 use pyo3::prelude::*;
 
@@ -7,9 +9,10 @@ use pyo3::prelude::*;
 #[pymodule]
 fn mandelbrot(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<complex::Complex>()?;
-    m.add_function(wrap_pyfunction!(mandelbrot::sample, m)?)?;
-    m.add_function(wrap_pyfunction!(mandelbrot::multi_sample, m)?)?;
-    m.add_function(wrap_pyfunction!(mandelbrot::render_image, m)?)?;
-    m.add_function(wrap_pyfunction!(mandelbrot::render_video, m)?)?;
+    m.add_function(wrap_pyfunction!(cpu::sample, m)?)?;
+    m.add_function(wrap_pyfunction!(cpu::multi_sample, m)?)?;
+    m.add_function(wrap_pyfunction!(cpu::render_image, m)?)?;
+    m.add_function(wrap_pyfunction!(cpu::render_video, m)?)?;
+    m.add_function(wrap_pyfunction!(gpu::render_image, m)?)?;
     Ok(())
 }

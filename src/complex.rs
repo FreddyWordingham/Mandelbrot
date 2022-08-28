@@ -1,4 +1,4 @@
-use pyo3::{prelude::*, PyObjectProtocol};
+use pyo3::prelude::*;
 use std::{
     fmt::{Display, Formatter, Result},
     ops::{Add, Mul},
@@ -22,6 +22,14 @@ impl Complex {
     #[new]
     pub fn new(re: f64, im: f64) -> Self {
         Self { re, im }
+    }
+
+    fn __str__(&self) -> PyResult<String> {
+        Ok(format!("{}", self))
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        Ok(format!("{}", self))
     }
 }
 
@@ -71,16 +79,5 @@ impl Mul for Complex {
 impl Display for Complex {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "({}, {})", self.re, self.im)
-    }
-}
-
-#[pyproto]
-impl PyObjectProtocol for Complex {
-    fn __str__(&self) -> PyResult<String> {
-        Ok(format!("{}", self))
-    }
-
-    fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("{}", self))
     }
 }
