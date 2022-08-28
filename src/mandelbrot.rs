@@ -4,6 +4,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use ndarray::{arr1, s, Array2, Array3};
 use palette::{Gradient, LinSrgb, Pixel};
 use pyo3::prelude::*;
+use std::path::{Path, PathBuf};
 
 /// Determine the number of iterations required to escape a point.
 #[pyfunction]
@@ -104,6 +105,7 @@ pub fn render_image(
     res: [usize; 2],
     super_samples: i32,
     max_iter: i32,
+    output_dir: String,
 ) {
     let cmap = Gradient::new(vec![
         LinSrgb::new(0.00, 0.05, 0.20),
@@ -117,7 +119,7 @@ pub fn render_image(
     sample_area(centre, scale, res, super_samples, max_iter, &mut data);
     data_to_cols(&data, max_iter, &cmap, &mut cols);
     cols_to_image(&cols)
-        .save(format!("output/img_{:04}.png", 0))
+        .save(Path::new(&output_dir).join(format!("img_{:04}.png", 0)))
         .expect("Failed to save image.");
 }
 
@@ -130,6 +132,7 @@ pub fn render_video(
     frames: usize,
     super_samples: i32,
     max_iter: i32,
+    output_dir: String,
 ) {
     let cmap = Gradient::new(vec![
         LinSrgb::new(0.00, 0.05, 0.20),
@@ -151,7 +154,7 @@ pub fn render_video(
         sample_area(centre, scale, res, super_samples, max_iter, &mut data);
         data_to_cols(&data, max_iter, &cmap, &mut cols);
         cols_to_image(&cols)
-            .save(format!("output/img_{:04}.png", n))
+            .save(Path::new(&output_dir).join(format!("img_{:04}.png", 0)))
             .expect("Failed to save image.");
 
         scale *= rate;
