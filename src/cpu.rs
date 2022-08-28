@@ -115,7 +115,14 @@ pub fn render_video(
             (1.0 / scale).log10() as i32
         );
 
-        sample_area(centre, scale, res, super_samples, max_iter + n, &mut data);
+        sample_area(
+            centre,
+            scale,
+            res,
+            super_samples,
+            max_iter + n as i32,
+            &mut data,
+        );
         data_to_cols(&data, max_iter, &cmap, &mut cols);
         cols_to_image(&cols)
             .save(Path::new(&output_dir).join(format!("img_{:04}.png", n)))
