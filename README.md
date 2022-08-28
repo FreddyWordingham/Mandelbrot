@@ -2,6 +2,8 @@
 
 Minimal example of a Rust powered FastAPI WebApp
 
+![Mandelbrot](resources/mandelbrot.png)
+
 ## Quickstart
 
 RNGesus take the wheel! Paste this into your terminal to download the repo, dependencies, build the Rust kernel, and run then run the application:
