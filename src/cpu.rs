@@ -1,4 +1,3 @@
-use indicatif::{ProgressBar, ProgressStyle};
 use ndarray::{Array2, Array3};
 use palette::{Gradient, LinSrgb};
 use pyo3::prelude::*;
@@ -53,24 +52,14 @@ fn sample_area(
     let delta = scale / (res[0] - 1).max(1) as f64;
     let epsilon = delta / (2 * super_samples) as f64;
 
-    let pb = ProgressBar::new((res[0] * res[1]) as u64);
-    pb.set_style(
-        ProgressStyle::default_bar()
-        .template("{spinner:.green} [{elapsed_precise}] [{bar:40.green/red}] [{pos}/{len}] {percent}% ({eta}) {msg}").expect("Failed to set progress bar style")
-        .progress_chars("\\/")
-    );
-
     for yi in 0..res[1] {
         let y = start.im + (delta * yi as f64);
         for xi in 0..res[0] {
             let x = start.re + (delta * xi as f64);
             let c = Complex::new(x, y);
             data[(xi, yi)] = multi_sample(c, max_iter, super_samples, epsilon);
-            pb.inc(1);
         }
     }
-
-    pb.finish_and_clear();
 }
 
 #[pyfunction]
