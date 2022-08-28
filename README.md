@@ -12,6 +12,6 @@ RNGesus take the wheel! Paste this into your terminal to download the repo, depe
 git clone git@github.com:FreddyWordingham/Mandelbrot.git
 cd Mandelbrot
 poetry install
-poetry run maturin develop
+poetry run maturin develop --release
 poetry run python python/example.py
 ```
