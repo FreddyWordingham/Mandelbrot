@@ -22,14 +22,19 @@ pub fn render_image(
         LinSrgb::new(0.95, 0.90, 0.30),
     ]);
 
+    let aspect_ratio = res[0] as f64 / res[1] as f64;
+    let start = centre + Complex::new(scale * -0.5, scale / aspect_ratio * -0.5);
+    let delta = scale / (res[0] - 1).max(1) as f64;
+    let epsilon = delta / (2 * super_samples) as f64;
+
     let src = format!(
         "
         __kernel void mandelbrot(__global uint* buffer, uint width, uint height, uint max_iterations) {{
             int re = get_global_id(0);
             int im = get_global_id(1);
 
-            float x0 = ((float)re / width) * 3.5 - 2.5;
-            float y0 = ((float)im / height) * 2.0 - 1.0;
+            float x0 = ((float)re * {}) + {};
+            float y0 = ((float)im * {}) + {};
             float x = 0.0;
             float y = 0.0;
             float x2 = 0.0;
@@ -46,7 +51,7 @@ pub fn render_image(
 
             buffer[(width * im) + re] = iteration;
         }}
-    "
+    ", delta, start.re, delta, start.im
     );
 
     let pro_que = ProQue::builder()
