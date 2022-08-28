@@ -7,6 +7,7 @@ use std::path::Path;
 use crate::{complex::Complex, util::cols_to_image};
 
 #[pyfunction]
+#[pyo3(name = "gpu_render_image")]
 pub fn render_image(
     centre: Complex,
     scale: f64,
@@ -21,8 +22,9 @@ pub fn render_image(
         LinSrgb::new(0.95, 0.90, 0.30),
     ]);
 
-    let src = r#"
-        __kernel void mandelbrot(__global uint* buffer, uint width, uint height, uint max_iterations) {
+    let src = format!(
+        "
+        __kernel void mandelbrot(__global uint* buffer, uint width, uint height, uint max_iterations) {{
             int re = get_global_id(0);
             int im = get_global_id(1);
 
@@ -34,17 +36,18 @@ pub fn render_image(
             float y2 = 0.0;
             uint iteration = 0;
 
-            while (((x2 + y2) <= 4.0) && (iteration < max_iterations)) {
+            while (((x2 + y2) <= 4.0) && (iteration < max_iterations)) {{
                 y = (x + x) * y + y0;
                 x = x2 - y2 + x0;
                 x2 = x * x;
                 y2 = y * y;
                 iteration = iteration + 1;
-            }
+            }}
 
             buffer[(width * im) + re] = iteration;
-        }
-    "#;
+        }}
+    "
+    );
 
     let pro_que = ProQue::builder()
         .src(src)
