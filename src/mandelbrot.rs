@@ -1,5 +1,6 @@
 use crate::complex::Complex;
 use image::RgbImage;
+use indicatif::{ProgressBar, ProgressStyle};
 use ndarray::{arr1, s, Array2, Array3};
 use palette::{Gradient, LinSrgb, Pixel};
 use pyo3::prelude::*;
@@ -48,14 +49,24 @@ fn sample_area(
     let delta = scale / (res[0] - 1).max(1) as f64;
     let epsilon = delta / (2 * super_samples) as f64;
 
+    let pb = ProgressBar::new((res[0] * res[1]) as u64);
+    pb.set_style(
+        ProgressStyle::default_bar()
+        .template("{spinner:.green} [{elapsed_precise}] [{bar:40.green/red}] [{pos}/{len}] {percent}% ({eta}) {msg}").expect("Failed to set progress bar style")
+        .progress_chars("\\/")
+    );
+
     for yi in 0..res[1] {
         let y = start.im + (delta * yi as f64);
         for xi in 0..res[0] {
             let x = start.re + (delta * xi as f64);
             let c = Complex::new(x, y);
             data[(xi, yi)] = multi_sample(c, max_iter, super_samples, epsilon);
+            pb.inc(1);
         }
     }
+
+    pb.finish_and_clear();
 }
 
 fn data_to_cols(
@@ -76,10 +87,14 @@ fn data_to_cols(
     }
 }
 
-fn cols_to_image(arr: Array3<u8>) -> RgbImage {
+fn cols_to_image(arr: &Array3<u8>) -> RgbImage {
     let (width, height, _) = arr.dim();
-    RgbImage::from_raw(width as u32, height as u32, arr.into_raw_vec())
-        .expect("container should have the right size for the image dimensions")
+    RgbImage::from_vec(
+        width as u32,
+        height as u32,
+        arr.as_slice().unwrap().to_vec(),
+    )
+    .expect("container should have the right size for the image dimensions")
 }
 
 #[pyfunction]
@@ -101,7 +116,44 @@ pub fn render_image(
 
     sample_area(centre, scale, res, super_samples, max_iter, &mut data);
     data_to_cols(&data, max_iter, &cmap, &mut cols);
-    cols_to_image(cols)
+    cols_to_image(&cols)
         .save(format!("output/img_{:04}.png", 0))
         .expect("Failed to save image.");
+}
+
+#[pyfunction]
+pub fn render_video(
+    centre: Complex,
+    mut scale: f64,
+    rate: f64,
+    res: [usize; 2],
+    frames: usize,
+    super_samples: i32,
+    max_iter: i32,
+) {
+    let cmap = Gradient::new(vec![
+        LinSrgb::new(0.00, 0.05, 0.20),
+        LinSrgb::new(0.70, 0.10, 0.20),
+        LinSrgb::new(0.95, 0.90, 0.30),
+    ]);
+
+    let mut data = Array2::<f64>::zeros(res);
+    let mut cols = Array3::<u8>::zeros((res[0], res[1], 3));
+
+    for n in 0..frames {
+        println!(
+            "Frame {} of {} \t ({}x)",
+            n + 1,
+            frames,
+            (1.0 / scale).log10() as i32
+        );
+
+        sample_area(centre, scale, res, super_samples, max_iter, &mut data);
+        data_to_cols(&data, max_iter, &cmap, &mut cols);
+        cols_to_image(&cols)
+            .save(format!("output/img_{:04}.png", n))
+            .expect("Failed to save image.");
+
+        scale *= rate;
+    }
 }
