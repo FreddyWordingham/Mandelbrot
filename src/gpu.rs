@@ -27,23 +27,20 @@ pub fn render_image(
     let delta = scale / (res[0] - 1).max(1) as f64;
     let epsilon = delta / (2 * super_samples) as f64;
 
-    let start_re = start.re;
-    let start_im = start.im;
-
     let src = format!(
         "
-        __kernel void mandelbrot(__global uint* buffer, uint width) {{
+        __kernel void mandelbrot(__global uint* buffer, float start_re, float start_im, uint width, uint super_samples, float delta, float epsilon, uint max_iter) {{
             int re = get_global_id(0);
             int im = get_global_id(1);
 
-            float start_x = ((float)re * {delta}) + {start_re};
-            float start_y = ((float)im * {delta}) + {start_im};
+            float start_x = ((float)re * delta) + start_re;
+            float start_y = ((float)im * delta) + start_im;
 
             float total = 0.0;
-            for (int i = 0; i < {super_samples}; i++) {{
-                float re_offset = {epsilon} * i;
-                for (int j = 0; j < {super_samples}; j++) {{
-                    float im_offset = {epsilon} * j;
+            for (int i = 0; i < super_samples; i++) {{
+                float re_offset = epsilon * i;
+                for (int j = 0; j < super_samples; j++) {{
+                    float im_offset = epsilon * j;
 
                     float x0 = start_x + re_offset;
                     float y0 = start_y + im_offset;
@@ -52,8 +49,8 @@ pub fn render_image(
                     float x2 = 0.0;
                     float y2 = 0.0;
                     uint iteration = 0;
-        
-                    while (((x2 + y2) <= 4.0) && (iteration < {max_iter})) {{
+
+                    while (((x2 + y2) <= 4.0) && (iteration < max_iter)) {{
                         y = (x + x) * y + y0;
                         x = x2 - y2 + x0;
                         x2 = x * x;
@@ -65,7 +62,7 @@ pub fn render_image(
                 }}
             }}
 
-            buffer[(width * im) + re] = (uint)(total / ({super_samples} * {super_samples}));
+            buffer[(width * im) + re] = (uint)(total / (super_samples * super_samples));
         }}
     "
     );
@@ -75,24 +72,29 @@ pub fn render_image(
         .dims((res[0], res[1]))
         .build()
         .unwrap();
-    let buffer = pro_que.create_buffer::<u32>().unwrap();
+    let gpu_buffer = pro_que.create_buffer::<u32>().unwrap();
     let kernel = pro_que
         .kernel_builder("mandelbrot")
-        .arg(&buffer)
+        .arg(&gpu_buffer)
+        .arg(start.re as f32)
+        .arg(start.im as f32)
         .arg(res[0])
+        .arg(super_samples as u32)
+        .arg(delta as f32)
+        .arg(epsilon as f32)
+        .arg(max_iter as u32)
         .build()
         .unwrap();
     unsafe { kernel.enq().unwrap() };
 
     let mut cols = Array3::<u8>::zeros((res[0], res[1], 3));
-    let max = max_iter as f32;
-    let mut vec = vec![0u32; buffer.len()];
-    buffer.read(&mut vec).enq().unwrap();
-    for (idx, iteration) in vec.iter().enumerate() {
+    let mut cpu_buffer = vec![0u32; gpu_buffer.len()];
+    gpu_buffer.read(&mut cpu_buffer).enq().unwrap();
+    for (idx, iteration) in cpu_buffer.iter().enumerate() {
         let xi = idx as usize % res[0] as usize;
         let yi = idx as usize / res[0] as usize;
 
-        let col = cmap.get(*iteration as f32 / max);
+        let col = cmap.get(*iteration as f32 / max_iter as f32);
         let u8s: [u8; 3] = col.into_format().into_raw();
         cols.slice_mut(s![xi, yi, ..]).assign(&arr1(&u8s));
     }
@@ -124,14 +126,12 @@ pub fn render_video(
 
     let src = format!(
         "
-        __kernel void mandelbrot(__global uint* buffer, float start_re, float start_im, uint width, uint super_samples, float delta, uint max_iter) {{
+        __kernel void mandelbrot(__global uint* buffer, float start_re, float start_im, uint width, uint super_samples, float delta, float epsilon, uint max_iter) {{
             int re = get_global_id(0);
             int im = get_global_id(1);
 
             float start_x = ((float)re * delta) + start_re;
             float start_y = ((float)im * delta) + start_im;
-
-            float epsilon = delta / (float)(2 * super_samples);
 
             float total = 0.0;
             for (int i = 0; i < super_samples; i++) {{
@@ -146,7 +146,7 @@ pub fn render_video(
                     float x2 = 0.0;
                     float y2 = 0.0;
                     uint iteration = 0;
-        
+
                     while (((x2 + y2) <= 4.0) && (iteration < max_iter)) {{
                         y = (x + x) * y + y0;
                         x = x2 - y2 + x0;
@@ -182,16 +182,18 @@ pub fn render_video(
 
         let start = centre + Complex::new(scale * -0.5, scale / aspect_ratio * -0.5);
         let delta = scale / (res[0] - 1).max(1) as f64;
+        let epsilon = delta / (2 * super_samples) as f64;
 
         let kernel = pro_que
             .kernel_builder("mandelbrot")
             .arg(&gpu_buffer)
-            .arg(start.re)
-            .arg(start.im)
+            .arg(start.re as f32)
+            .arg(start.im as f32)
             .arg(res[0])
-            .arg(super_samples)
-            .arg(delta)
-            .arg(max_iter)
+            .arg(super_samples as u32)
+            .arg(delta as f32)
+            .arg(epsilon as f32)
+            .arg(max_iter as u32)
             .build()
             .unwrap();
         unsafe { kernel.enq().unwrap() };
