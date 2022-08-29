@@ -14,5 +14,6 @@ fn mandelbrot(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(cpu::render_image, m)?)?;
     m.add_function(wrap_pyfunction!(cpu::render_video, m)?)?;
     m.add_function(wrap_pyfunction!(gpu::render_image, m)?)?;
+    m.add_function(wrap_pyfunction!(gpu::render_video, m)?)?;
     Ok(())
 }

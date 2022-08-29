@@ -16,7 +16,7 @@ print(centre, " -> ", m / super_samples**2)
 
 scale = 1e-0
 res = [1000, 1000]
-mandelbrot.gpu_render_image(centre, scale, res, super_samples, max_iter, ".")
-# mandelbrot.render_video(
-#     centre, scale, 0.95, res, 1000, super_samples, max_iter, "output"
-# )
+# mandelbrot.gpu_render_image(centre, scale, res, super_samples, max_iter, ".")
+mandelbrot.gpu_render_video(
+    centre, scale, 0.95, res, 1000, super_samples, max_iter, "output"
+)
