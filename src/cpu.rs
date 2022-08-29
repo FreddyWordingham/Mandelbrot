@@ -123,7 +123,7 @@ pub fn render_video(
             max_iter + n as i32,
             &mut data,
         );
-        data_to_cols(&data, max_iter + n, &cmap, &mut cols);
+        data_to_cols(&data, max_iter + n as i32, &cmap, &mut cols);
         cols_to_image(&cols)
             .save(Path::new(&output_dir).join(format!("img_{:04}.png", n)))
             .expect("Failed to save image.");

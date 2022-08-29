@@ -27,31 +27,47 @@ pub fn render_image(
     let delta = scale / (res[0] - 1).max(1) as f64;
     let epsilon = delta / (2 * super_samples) as f64;
 
+    let start_re = start.re;
+    let start_im = start.im;
+
     let src = format!(
         "
-        __kernel void mandelbrot(__global uint* buffer, uint width, uint height, uint max_iterations) {{
+        __kernel void mandelbrot(__global uint* buffer, uint width) {{
             int re = get_global_id(0);
             int im = get_global_id(1);
 
-            float x0 = ((float)re * {}) + {};
-            float y0 = ((float)im * {}) + {};
-            float x = 0.0;
-            float y = 0.0;
-            float x2 = 0.0;
-            float y2 = 0.0;
-            uint iteration = 0;
+            float start_x = ((float)re * {delta}) + {start_re};
+            float start_y = ((float)im * {delta}) + {start_im};
 
-            while (((x2 + y2) <= 4.0) && (iteration < max_iterations)) {{
-                y = (x + x) * y + y0;
-                x = x2 - y2 + x0;
-                x2 = x * x;
-                y2 = y * y;
-                iteration = iteration + 1;
+            float total = 0.0;
+            for (int i = 0; i < {super_samples}; i++) {{
+                float re_offset = {epsilon} * i;
+                for (int j = 0; j < {super_samples}; j++) {{
+                    float im_offset = {epsilon} * j;
+
+                    float x0 = start_x + re_offset;
+                    float y0 = start_y + im_offset;
+                    float x = 0.0;
+                    float y = 0.0;
+                    float x2 = 0.0;
+                    float y2 = 0.0;
+                    uint iteration = 0;
+        
+                    while (((x2 + y2) <= 4.0) && (iteration < {max_iter})) {{
+                        y = (x + x) * y + y0;
+                        x = x2 - y2 + x0;
+                        x2 = x * x;
+                        y2 = y * y;
+                        iteration = iteration + 1;
+                    }}
+
+                    total += (float)iteration;
+                }}
             }}
 
-            buffer[(width * im) + re] = iteration;
+            buffer[(width * im) + re] = (uint)(total / ({super_samples} * {super_samples}));
         }}
-    ", delta, start.re, delta, start.im
+    "
     );
 
     let pro_que = ProQue::builder()
@@ -64,8 +80,6 @@ pub fn render_image(
         .kernel_builder("mandelbrot")
         .arg(&buffer)
         .arg(res[0])
-        .arg(res[1])
-        .arg(max_iter as u32)
         .build()
         .unwrap();
 
