@@ -6,6 +6,8 @@ use std::path::Path;
 
 use crate::{complex::Complex, util::cols_to_image};
 
+/// Render a rectangular region of the complex plane,
+/// using the GPU to accelerate the process.
 #[pyfunction]
 #[pyo3(name = "gpu_render_image")]
 pub fn render_image(
@@ -104,6 +106,10 @@ pub fn render_image(
         .expect("Failed to save image.");
 }
 
+/// Repeatedly render a ever increasing/decreasing region of the complex plane,
+/// using the GPU to accelerate the process.
+/// The scale at each iteration is multiplied by the given rate.
+/// The max_iter is increased at each iteration.
 #[pyfunction]
 #[pyo3(name = "gpu_render_video")]
 pub fn render_video(
