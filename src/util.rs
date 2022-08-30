@@ -2,6 +2,9 @@ use image::RgbImage;
 use ndarray::{arr1, s, Array2, Array3};
 use palette::{Gradient, LinSrgb, Pixel};
 
+/// Transform an array of scalar samples into a image of colours samples.
+/// Input data is expected to be a two-dimensional array of scalars.
+/// Output data array will be three-dimensional; spatial in first and second dimensions (matching the input), and colour in third.
 pub fn data_to_cols(
     data: &Array2<f64>,
     max_iter: i32,
@@ -20,6 +23,7 @@ pub fn data_to_cols(
     }
 }
 
+/// Transform an array of colour components into a coloured image colours.
 pub fn cols_to_image(arr: &Array3<u8>) -> RgbImage {
     let (width, height, _) = arr.dim();
     RgbImage::from_vec(
@@ -27,5 +31,5 @@ pub fn cols_to_image(arr: &Array3<u8>) -> RgbImage {
         height as u32,
         arr.as_slice().unwrap().to_vec(),
     )
-    .expect("container should have the right size for the image dimensions")
+    .expect("Container should have the right size for the image dimensions.")
 }
