@@ -5,7 +5,7 @@ pub mod util;
 
 use pyo3::prelude::*;
 
-/// A Python module implemented in Rust.
+/// Export the Python module.
 #[pymodule]
 fn mandelbrot(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<complex::Complex>()?;
