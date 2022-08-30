@@ -39,6 +39,11 @@ pub fn multi_sample(c: Complex, max_iter: i32, super_samples: i32, epsilon: f64)
     total as f64 / (super_samples * super_samples) as f64
 }
 
+/// Sample a rectangular region of the complex plane.
+/// The scale input defines the width of the real-axis sampled.
+/// The aspect ratio is constrained to unity, so the resolution will determine the height of the imaginary-axis samples.
+/// data is a two-dimensional array of scalar samples which can be used to store results.
+/// We pass it in here to avoid having to re-allocate memory each time.
 fn sample_area(
     centre: Complex,
     scale: f64,
@@ -62,6 +67,8 @@ fn sample_area(
     }
 }
 
+/// Sample a rectangular region of the complex plane,
+/// and then save the scalar samples as a coloured image.
 #[pyfunction]
 pub fn render_image(
     centre: Complex,
@@ -87,6 +94,9 @@ pub fn render_image(
         .expect("Failed to save image.");
 }
 
+/// Repeatedly render a ever increasing/decreasing region of the complex plane.
+/// The scale at each iteration is multiplied by the given rate.
+/// The max_iter is increased at each iteration.
 #[pyfunction]
 pub fn render_video(
     centre: Complex,
