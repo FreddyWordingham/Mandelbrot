@@ -27,8 +27,8 @@ pub fn data_to_cols(
 pub fn cols_to_image(arr: &Array3<u8>) -> RgbImage {
     let (width, height, _) = arr.dim();
     RgbImage::from_vec(
-        width as u32,
         height as u32,
+        width as u32,
         arr.as_slice().unwrap().to_vec(),
     )
     .expect("Container should have the right size for the image dimensions.")
