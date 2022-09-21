@@ -1,6 +1,6 @@
 # Mandelbrot
 
-Minimal example of a Rust + GPU powered FastAPI WebApp
+Minimal example of a Rust + GPU rendering
 
 ![Mandelbrot](resources/mandelbrot.png)
 
