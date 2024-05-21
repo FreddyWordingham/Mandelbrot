@@ -1,9 +1,9 @@
 use bevy::{
     prelude::*,
-    reflect::TypePath,
-    render::render_resource::{AsBindGroup, ShaderRef},
-    sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
+    sprite::{Material2dPlugin, MaterialMesh2dBundle},
 };
+
+use mandelbrot::prelude::*;
 
 fn main() {
     App::new()
@@ -12,7 +12,16 @@ fn main() {
             Material2dPlugin::<CustomMaterial>::default(),
         ))
         .add_systems(Startup, setup)
-        .add_systems(Update, bevy::window::close_on_esc)
+        .add_systems(
+            Update,
+            (
+                bevy::window::close_on_esc,
+                // move_canvas,
+                move_world_with_input,
+                change_number_of_iterations,
+                change_world_scale,
+            ),
+        )
         .run();
 }
 
@@ -27,29 +36,14 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
 
     // Rendering quad
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: meshes.add(Rectangle::default()).into(),
-        transform: Transform::default().with_scale(Vec3::splat(512.0)),
-        material: materials.add(CustomMaterial {
-            quad_colour: Color::WHITE,
-            quad_texture: Some(asset_server.load("textures/blank.png")),
-        }),
-        ..default()
-    });
-}
-
-// This data is passed to the shader.
-#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-struct CustomMaterial {
-    #[uniform(0)]
-    quad_colour: Color,
-    #[texture(1)]
-    #[sampler(2)]
-    quad_texture: Option<Handle<Image>>,
-}
-
-impl Material2d for CustomMaterial {
-    fn fragment_shader() -> ShaderRef {
-        "shaders/mandelbrot.wgsl".into()
-    }
+    let texture = Some(asset_server.load("textures/blank.png"));
+    commands.spawn((
+        Canvas,
+        MaterialMesh2dBundle {
+            mesh: meshes.add(Rectangle::default()).into(),
+            transform: Transform::default().with_scale(Vec3::splat(512.0)),
+            material: materials.add(CustomMaterial::new(texture)),
+            ..default()
+        },
+    ));
 }
